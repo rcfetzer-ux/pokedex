@@ -6,17 +6,36 @@ import { formatCents, formatCentsSigned, formatRatio } from '@pokedex/shared';
 import { api } from '../../src/api/client';
 import { useAsync } from '../../src/api/hooks';
 import { CardRow } from '../../src/components/CardRow';
+import { CatalogSetup } from '../../src/components/CatalogSetup';
 import { EmptyState, ErrorState, Loading, Screen } from '../../src/components/common';
 import { colors, directionColor, radius, spacing } from '../../src/theme';
 
 export default function CollectionScreen() {
   const state = useAsync(useCallback(() => api.collection(24), []));
+  const status = useAsync(useCallback(() => api.status(), []));
 
   if (state.initialLoading) return <Loading label="Valuing your collection…" />;
   if (state.error && !state.data) return <ErrorState message={state.error} onRetry={state.reload} />;
 
   const data = state.data;
   const summary = data?.summary;
+
+  // An empty catalog makes every scan fail silently, so it takes priority over
+  // an empty collection: there is nothing to collect until the catalog exists.
+  const catalogEmpty = status.data != null && status.data.cards === 0;
+  if (catalogEmpty) {
+    return (
+      <Screen>
+        <CatalogSetup
+          provider={status.data!.provider}
+          onDone={() => {
+            void status.reload();
+            void state.reload();
+          }}
+        />
+      </Screen>
+    );
+  }
 
   return (
     <Screen>

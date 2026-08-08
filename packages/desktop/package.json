@@ -1,0 +1,33 @@
+{
+  "name": "@pokedex/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Desktop shell for the Pokedex card tracker.",
+  "main": "main.js",
+  "scripts": {
+    "prestart": "npm run build:web",
+    "start": "electron .",
+    "dev": "npm run build:web && electron .",
+    "build:web": "npm run export:web -w @pokedex/app",
+    "build:server": "npm run build -w @pokedex/shared && npm run build -w @pokedex/server",
+    "dist": "npm run build:web && npm run build:server && electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^33.3.1",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.pokedex.tracker",
+    "productName": "Pokedex",
+    "files": ["main.js", "preload.js"],
+    "extraResources": [
+      { "from": "../app/dist", "to": "web" },
+      { "from": "../server/dist", "to": "server/dist" },
+      { "from": "../shared/dist", "to": "shared/dist" },
+      { "from": "../../node_modules", "to": "node_modules" }
+    ],
+    "mac": { "category": "public.app-category.finance", "target": ["dmg", "zip"] },
+    "win": { "target": ["nsis"] },
+    "linux": { "target": ["AppImage", "deb"], "category": "Office" }
+  }
+}

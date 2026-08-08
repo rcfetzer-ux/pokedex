@@ -31,6 +31,7 @@ export default function MoversScreen() {
     ),
     [windowHours, direction],
   );
+  const status = useAsync(useCallback(() => api.status(), []));
 
   if (state.initialLoading) return <Loading label="Scanning the market…" />;
   if (state.error && !state.data) return <ErrorState message={state.error} onRetry={state.reload} />;
@@ -68,14 +69,7 @@ export default function MoversScreen() {
             />
           </View>
         }
-        ListEmptyComponent={
-          <EmptyState
-            title="Nothing major moved"
-            hint={`No card outside your collection swung significantly in the last ${
-              windowHours === 24 ? '24 hours' : '7 days'
-            }.`}
-          />
-        }
+        ListEmptyComponent={<MoversEmpty windowHours={windowHours} status={status.data} />}
         renderItem={({ item }) => (
           <CardRow
             card={item.card}
@@ -87,6 +81,39 @@ export default function MoversScreen() {
         )}
       />
     </Screen>
+  );
+}
+
+/**
+ * "Nothing moved" and "we have not been watching long enough to say" look
+ * identical in the data and mean completely different things to the user, so
+ * they get different copy.
+ */
+function MoversEmpty({
+  windowHours,
+  status,
+}: {
+  windowHours: number;
+  status: { historyStartedAt: number | null } | null;
+}) {
+  const label = windowHours === 24 ? '24 hours' : '7 days';
+
+  const trackedMs = status?.historyStartedAt == null ? 0 : Date.now() - status.historyStartedAt;
+  if (trackedMs < windowHours * 60 * 60 * 1000) {
+    const remainingHours = Math.max(1, Math.ceil(windowHours - trackedMs / (60 * 60 * 1000)));
+    return (
+      <EmptyState
+        title="Still building price history"
+        hint={`Swings over ${label} need a full ${label} of recorded prices. About ${remainingHours}h to go — leave the server running and check back.`}
+      />
+    );
+  }
+
+  return (
+    <EmptyState
+      title="Nothing major moved"
+      hint={`No card outside your collection swung significantly in the last ${label}.`}
+    />
   );
 }
 

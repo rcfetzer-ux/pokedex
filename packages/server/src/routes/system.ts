@@ -15,12 +15,21 @@ export function registerSystemRoutes(app: FastifyInstance, context: AppContext):
   app.get('/api/status', async () => {
     const lastSync = getMeta(context.db, 'catalog:last_sync_at');
     const lastRefresh = getMeta(context.db, 'prices:last_refresh_at');
+
+    // Oldest snapshot we hold. Clients need this to tell "nothing moved" apart
+    // from "we have not been watching long enough to know" — no price feed
+    // sells history, so a fresh install genuinely cannot report a 24h change.
+    const oldest = context.db
+      .prepare('SELECT MIN(ts) AS ts FROM price_snapshots')
+      .get() as { ts: number | null };
+
     return {
       provider: context.provider.name,
       sets: listSets(context.db).length,
       cards: countCards(context.db),
       lastCatalogSyncAt: lastSync ? Number(lastSync) : null,
       lastPriceRefreshAt: lastRefresh ? Number(lastRefresh) : null,
+      historyStartedAt: oldest.ts ?? null,
       priceRefreshMinutes: context.config.priceRefreshMinutes,
       swingWindowsHours: context.config.swingWindowsHours,
       notifyAtOrAbove: context.config.notifyAtOrAbove,

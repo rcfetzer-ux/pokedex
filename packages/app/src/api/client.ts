@@ -83,6 +83,8 @@ export interface StatusResponse {
   cards: number;
   lastCatalogSyncAt: number | null;
   lastPriceRefreshAt: number | null;
+  /** Oldest price snapshot held; null when nothing has been recorded yet. */
+  historyStartedAt: number | null;
   swingWindowsHours: number[];
   notifyAtOrAbove: string;
 }
@@ -197,6 +199,19 @@ export const api = {
 
   removeFromInventory: (id: string) =>
     request<void>(`/api/inventory/${id}`, { method: 'DELETE' }),
+
+  /** Pulls every set and card from the configured provider. Minutes, not seconds. */
+  syncCatalog: () =>
+    request<{ sets: number; cards: number; failedSets: { setId: string }[] }>('/api/admin/sync', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+
+  refreshPrices: () =>
+    request<{ snapshots: number; alerts: number }>('/api/admin/refresh-prices', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
 
   registerPushToken: (token: string, platform: string) =>
     request<{ ok: boolean }>('/api/push/register', {
