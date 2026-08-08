@@ -19,6 +19,8 @@ const DAY_MS = 24 * HOUR_MS;
 const SHOCK_MEMORY_DAYS = 60;
 /** Card-days that get a shock, per thousand. */
 const SHOCK_RATE_PER_1000 = 100;
+/** Half-width of the shock size in log space: e^0.4 ≈ +49% / -33%. */
+const SHOCK_LOG_SPAN = 0.4;
 
 const VARIANT_MULTIPLIER: Record<PriceVariant, number> = {
   normal: 1,
@@ -125,10 +127,10 @@ export class FixtureProvider implements CardDataProvider {
     // window so this stays O(1)-ish.
     const today = Math.floor(ts / DAY_MS);
     for (let day = today - SHOCK_MEMORY_DAYS; day <= today; day += 1) {
-      const magnitude = shockMagnitude(key, day);
-      if (magnitude === 0) continue;
+      const factor = shockFactor(key, day);
+      if (factor === 1) continue;
       const progress = day === today ? (ts % DAY_MS) / DAY_MS : 1;
-      multiplier *= 1 + magnitude * progress;
+      multiplier *= factor ** progress;
     }
 
     const marketCents = Math.max(
@@ -148,12 +150,15 @@ export class FixtureProvider implements CardDataProvider {
   }
 }
 
-/** 0 when the card-day has no shock, else the fractional size of the move. */
-function shockMagnitude(key: string, day: number): number {
+/** 1 when the card-day has no shock, else the multiplier the move applies. */
+function shockFactor(key: string, day: number): number {
   const roll = Math.floor(rand01(`${key}|shock|${day}`) * 1000);
-  if (roll >= SHOCK_RATE_PER_1000) return 0;
-  // Skewed slightly upward: hype spikes are sharper than slow bleeds.
-  return randRange(`${key}|shockmag|${day}`, -0.45, 0.75);
+  if (roll >= SHOCK_RATE_PER_1000) return 1;
+
+  // Symmetric in log space, so accumulating dozens of days of shocks has no
+  // long-run drift. Drawing the size linearly (say -45%..+75%) looks fair but
+  // compounds upward, and a few weeks of it puts a $420 card at $6,000.
+  return Math.exp(randRange(`${key}|shockmag|${day}`, -SHOCK_LOG_SPAN, SHOCK_LOG_SPAN));
 }
 
 function basePriceCents(card: FixtureCard): number {

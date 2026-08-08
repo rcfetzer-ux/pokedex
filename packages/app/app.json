@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "Pokedex",
+    "slug": "pokedex",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "pokedex",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0B1120"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.pokedex.tracker",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Scan your Pokémon cards to add them to your collection.",
+        "NSPhotoLibraryUsageDescription": "Pick a photo of a card to add it to your collection."
+      }
+    },
+    "android": {
+      "package": "com.pokedex.tracker",
+      "adaptiveIcon": {
+        "backgroundColor": "#0B1120"
+      },
+      "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE"]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Scan your Pokémon cards to add them to your collection."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Pick a photo of a card to add it to your collection."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
