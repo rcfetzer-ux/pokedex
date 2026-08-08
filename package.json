@@ -1,0 +1,25 @@
+{
+  "name": "pokedex",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Scan, catalog and value-track Pokemon cards across every set, on desktop and mobile.",
+  "workspaces": [
+    "packages/shared",
+    "packages/server",
+    "packages/app",
+    "packages/desktop"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "build": "npm run build -w @pokedex/shared && npm run build -w @pokedex/server",
+    "test": "npm run test -w @pokedex/shared && npm run test -w @pokedex/server",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "server": "npm run dev -w @pokedex/server",
+    "app": "npm run start -w @pokedex/app",
+    "app:web": "npm run web -w @pokedex/app",
+    "desktop": "npm run dev -w @pokedex/desktop",
+    "seed": "npm run seed -w @pokedex/server"
+  }
+}

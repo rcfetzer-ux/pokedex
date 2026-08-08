@@ -1,0 +1,28 @@
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+
+# local data
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# env
+.env
+.env.local
+
+# expo
+.expo/
+web-build/
+packages/app/dist/
+
+# electron
+packages/desktop/out/
+packages/desktop/renderer/
+
+# os / editor
+.DS_Store
+*.log
