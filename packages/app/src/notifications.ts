@@ -8,6 +8,10 @@ import { api } from './api/client';
 /** Alerts should surface even with the app open — that is the whole point. */
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
+    // shouldShowAlert was split into banner + list; both are set so the
+    // behaviour is identical on the SDKs that read either field.
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,

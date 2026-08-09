@@ -1,10 +1,10 @@
-import { Text } from 'react-native';
+import { Text, type ColorValue } from 'react-native';
 import { Tabs } from 'expo-router';
 
 import { colors } from '../../src/theme';
 
 /** Emoji tab icons keep the app icon-library-free and identical on every platform. */
-function TabIcon({ glyph, color }: { glyph: string; color: string }) {
+function TabIcon({ glyph, color }: { glyph: string; color: ColorValue }) {
   return <Text style={{ fontSize: 20, color }}>{glyph}</Text>;
 }
 

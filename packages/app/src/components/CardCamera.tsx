@@ -53,7 +53,13 @@ export const cameraSupported = true;
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: '#000' },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    // RN 0.86 dropped StyleSheet.absoluteFillObject; absoluteFill is a
+    // registered style ID, not a spreadable object.
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.md,
