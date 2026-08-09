@@ -1,5 +1,5 @@
-import { mkdirSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { existsSync, mkdirSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 
 import { DEFAULT_THRESHOLDS, type SwingMagnitude, type SwingThresholds } from '@pokedex/shared';
 
@@ -42,6 +42,17 @@ export interface Config {
   moversMinPriceCents: number;
   /** Cap on how many cards a single price refresh will pull. 0 = no cap. */
   priceRefreshLimit: number;
+  /**
+   * Shared secret required on every /api route. Null disables auth entirely,
+   * which is the sensible default for a server bound to your own machine and
+   * fatal in production (see checkDeploymentSafety).
+   */
+  apiToken: string | null;
+  /**
+   * Directory holding the exported web build. When present the API also serves
+   * the UI, so a deployment is one origin and one process.
+   */
+  webRoot: string | null;
 }
 
 function num(value: string | undefined, fallback: number): number {
@@ -53,6 +64,23 @@ function num(value: string | undefined, fallback: number): number {
 function bool(value: string | undefined, fallback: boolean): boolean {
   if (value == null) return fallback;
   return /^(1|true|yes|on)$/i.test(value);
+}
+
+/**
+ * Locate the exported web build. An explicit WEB_ROOT wins; otherwise fall back
+ * to the app package's default export directory, which is where it lands in the
+ * Docker image and in a local `npm run export:web`.
+ */
+function resolveWebRoot(explicit: string | undefined): string | null {
+  const candidates = explicit
+    ? [explicit]
+    : [resolve('./web'), resolve('../app/dist'), resolve('../../app/dist')];
+
+  for (const candidate of candidates) {
+    const resolved = resolve(candidate);
+    if (existsSync(join(resolved, 'index.html'))) return resolved;
+  }
+  return null;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -89,5 +117,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       .filter((value) => Number.isFinite(value) && value > 0),
     moversMinPriceCents: num(env.MOVERS_MIN_PRICE_CENTS, 200),
     priceRefreshLimit: num(env.PRICE_REFRESH_LIMIT, 0),
+    apiToken: env.API_TOKEN?.trim() ? env.API_TOKEN.trim() : null,
+    webRoot: resolveWebRoot(env.WEB_ROOT),
   };
 }

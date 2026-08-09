@@ -121,6 +121,8 @@ export function testConfig(overrides: Partial<Config> = {}): Config {
     swingWindowsHours: [24, 168],
     moversMinPriceCents: 200,
     priceRefreshLimit: 0,
+    apiToken: null,
+    webRoot: null,
     ...overrides,
   };
 }

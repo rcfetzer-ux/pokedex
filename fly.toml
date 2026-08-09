@@ -1,0 +1,49 @@
+# fly.toml — single-host deployment (API + web UI in one process).
+#
+# Setup:
+#   fly launch --no-deploy --copy-config
+#   fly volumes create pokedex_data --size 1
+#   fly secrets set API_TOKEN=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+#   fly secrets set POKEMONTCG_API_KEY=...   # optional, for live prices
+#   fly deploy
+#
+# Then open the app, paste the API_TOKEN when prompted, and import the catalog.
+
+app = "pokedex"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  HOST = "0.0.0.0"
+  # Switch to "pokemontcgio" once POKEMONTCG_API_KEY is set.
+  PRICE_PROVIDER = "fixture"
+  PRICE_REFRESH_MINUTES = "60"
+
+# SQLite holds the price history, which no provider can backfill. Losing this
+# volume means losing every recorded swing, so it is not optional.
+[[mounts]]
+  source = "pokedex_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  # Never scale to zero: the hourly price refresh is the whole product, and a
+  # stopped machine records no history.
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "20s"
+    method = "GET"
+    path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

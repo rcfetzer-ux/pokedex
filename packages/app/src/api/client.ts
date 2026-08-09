@@ -1,5 +1,7 @@
 import Constants from 'expo-constants';
 
+import { getCachedToken } from './auth';
+
 import type {
   AlertWithCard,
   CardWithSet,
@@ -38,6 +40,14 @@ function resolveBaseUrl(): string {
   if (explicit) return explicit.replace(/\/$/, '');
 
   const hostUri = Constants.expoConfig?.hostUri ?? Constants.expoGoConfig?.debuggerHost;
+
+  // A web build with no hostUri was not served by the Expo dev server, which
+  // means the API is serving it — the single-host deployment. Same origin, so
+  // no cross-origin request and no mixed content whatever the domain is.
+  if (!hostUri && typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin.replace(/\/$/, '');
+  }
+
   const host = hostUri?.split(':')[0];
   if (host) return `http://${host}:${DEFAULT_API_PORT}`;
 
@@ -57,15 +67,27 @@ export class ApiError extends Error {
   }
 }
 
+/** Thrown on 401 so the UI can show the token prompt instead of an error. */
+export class UnauthorizedError extends ApiError {
+  constructor() {
+    super('This server needs an access token.', 401, 'unauthorized');
+    this.name = 'UnauthorizedError';
+  }
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = getCachedToken();
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: {
       'content-type': 'application/json',
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
       ...(init.headers ?? {}),
     },
   });
 
+  if (response.status === 401) throw new UnauthorizedError();
   if (response.status === 204) return undefined as T;
 
   const text = await response.text();
@@ -142,6 +164,9 @@ export interface AddInventoryInput {
 
 export const api = {
   status: () => request<StatusResponse>('/api/status'),
+
+  /** 200 means the current token is accepted, or that none is required. */
+  authCheck: () => request<{ ok: boolean; authRequired: boolean }>('/api/auth/check'),
 
   collection: (windowHours = 24) =>
     request<CollectionResponse>(`/api/collection?windowHours=${windowHours}`),

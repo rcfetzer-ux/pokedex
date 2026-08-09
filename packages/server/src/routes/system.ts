@@ -12,6 +12,15 @@ const syncBody = z.object({ setIds: z.array(z.string()).optional() }).default({}
 export function registerSystemRoutes(app: FastifyInstance, context: AppContext): void {
   app.get('/api/health', async () => ({ ok: true, provider: context.provider.name }));
 
+  /**
+   * Reaching this at all means the token was accepted (or none is required),
+   * so the app can validate a token before storing it.
+   */
+  app.get('/api/auth/check', async () => ({
+    ok: true,
+    authRequired: context.config.apiToken != null,
+  }));
+
   app.get('/api/status', async () => {
     const lastSync = getMeta(context.db, 'catalog:last_sync_at');
     const lastRefresh = getMeta(context.db, 'prices:last_refresh_at');

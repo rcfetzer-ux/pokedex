@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+**/dist
+**/build
+packages/desktop
+packages/app/.expo
+data
+*.db
+*.db-wal
+*.db-shm
+.git
+.github
+*.log
+.env
+.env.local

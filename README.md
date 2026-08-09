@@ -58,6 +58,58 @@ Everything price-related sits behind one interface (`CardDataProvider` in
 means writing one class and registering it in `providers/index.ts` — nothing
 downstream knows which feed it is reading.
 
+## Deploying
+
+The API can serve the web build itself, so a deployment is **one process on one
+origin** — no CORS, no mixed-content problems, and one URL for phone, desktop
+and browser.
+
+```bash
+fly launch --no-deploy --copy-config
+fly volumes create pokedex_data --size 1
+fly secrets set API_TOKEN=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+fly deploy
+```
+
+Open the URL, paste the token when prompted, import the catalog, done. The
+token is stored on the device, so it is asked for once.
+
+`Dockerfile` and `fly.toml` are in the repo; the image is plain Docker, so
+Railway, Render, a VPS or anything else that runs a container works the same
+way. Set `WEB_ROOT` to the exported web build and the server picks it up.
+
+**The volume is not optional.** SQLite holds the price history, and no provider
+sells history back — losing that volume means every recorded swing is gone
+permanently, and the app needs another 24 hours before it can report a daily
+change again.
+
+### Authentication
+
+Every `/api` route requires a token when `API_TOKEN` is set — sent as
+`Authorization: Bearer <token>` or `X-Api-Key`. `/api/health` stays open so
+health checks work without a credential.
+
+The rules are deliberately asymmetric:
+
+- **Local development**: no token needed. The server binds `0.0.0.0` so a phone
+  on the same Wi-Fi can reach it, and it warns at boot that anyone on your
+  network can read and modify your collection.
+- **Production** (`NODE_ENV=production`): the server **refuses to start**
+  without `API_TOKEN`. There is no way to accidentally deploy an open API that
+  would let a stranger empty your collection.
+
+One shared token rather than user accounts, because this is one person's
+collection on their own server. If you ever share it, that assumption is the
+first thing to revisit.
+
+### Why not GitHub Pages
+
+Pages serves static files, and the frontend is static — but the API is a
+long-running Node process with SQLite and an hourly refresh job, and Pages runs
+no code. You would still need a host for the API, plus subpath configuration, a
+404.html routing fallback, and an HTTPS API to avoid mixed-content blocking.
+Single-host deployment avoids all four.
+
 ## How value tracking works
 
 **Prices are snapshotted, not fetched on demand.** No free feed sells price
@@ -145,6 +197,8 @@ Server, all optional:
 | `SWING_FLOOR_CENTS` | `50` | Moves below this never alert |
 | `HISTORY_RETENTION_DAYS` | `400` | Snapshot pruning horizon |
 | `TESSDATA_PATH` | — | Directory holding `eng.traineddata` |
+| `API_TOKEN` | — | Shared secret for `/api`. Required when `NODE_ENV=production` |
+| `WEB_ROOT` | auto | Exported web build to serve alongside the API |
 
 App: `EXPO_PUBLIC_API_URL` sets the API address at build time. In Expo dev the
 app derives it from the dev server's own LAN address, which is what makes a
@@ -153,12 +207,13 @@ physical phone work without configuration.
 ## Testing
 
 ```bash
-npm test         # 90 tests across shared + server
+npm test         # 107 tests across shared + server
 npm run typecheck
 ```
 
 The suite covers swing classification and its edge cases, OCR parsing and
-matching, the full ingest → change → alert pipeline, the HTTP surface, and both
+matching, the full ingest → change → alert pipeline, the HTTP surface, token
+auth (including query-string and lookalike-path bypass attempts), and both
 price providers (the live one against an injected `fetch`).
 
 ## Known gaps
