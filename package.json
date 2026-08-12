@@ -10,7 +10,7 @@
     "packages/desktop"
   ],
   "engines": {
-    "node": ">=20.11"
+    "node": ">=22"
   },
   "scripts": {
     "build": "npm run build -w @pokedex/shared && npm run build -w @pokedex/server",

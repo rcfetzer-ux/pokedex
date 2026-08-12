@@ -13,6 +13,16 @@ mobile, from one codebase.
 - **Watch the market** for cards you *don't* own that moved hard in the last
   24 hours.
 
+## Requirements
+
+**Node 22 LTS** (`.nvmrc` pins it). Node 20 is out of maintenance and below
+better-sqlite3's floor.
+
+Newer Node releases can work, but only when better-sqlite3 publishes a prebuilt
+binary for that exact ABI. Without one, npm compiles it from source and needs a
+full C++ toolchain — Visual Studio Build Tools on Windows, which is a multi-GB
+install. Node 22 has prebuilds on every platform and needs no compiler.
+
 ## Quick start
 
 ```bash
