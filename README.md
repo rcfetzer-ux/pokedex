@@ -15,13 +15,15 @@ mobile, from one codebase.
 
 ## Requirements
 
-**Node 22 LTS** (`.nvmrc` pins it). Node 20 is out of maintenance and below
-better-sqlite3's floor.
+**Node 22 or newer** — 22 LTS and 24 are both fine. `.nvmrc` names 22 for
+anyone who wants a pinned version.
 
-Newer Node releases can work, but only when better-sqlite3 publishes a prebuilt
-binary for that exact ABI. Without one, npm compiles it from source and needs a
-full C++ toolchain — Visual Studio Build Tools on Windows, which is a multi-GB
-install. Node 22 has prebuilds on every platform and needs no compiler.
+Nothing here needs a C++ toolchain. better-sqlite3 v13 ships N-API binaries
+inside the npm package for every platform, so `npm install` never invokes
+node-gyp. (Earlier versions did: they fetched ABI-specific prebuilds and fell
+back to compiling from source when none matched the running Node, which on
+Windows meant a multi-GB Visual Studio Build Tools install. Upgrading to v13
+removed that failure mode.)
 
 ## Quick start
 
