@@ -5,9 +5,8 @@
   "description": "Desktop shell for the Pokedex card tracker.",
   "main": "main.js",
   "scripts": {
-    "prestart": "npm run build:web",
     "start": "electron .",
-    "dev": "npm run build:web && electron .",
+    "dev": "npm run build:server && npm run build:web && electron .",
     "build:web": "npm run export:web -w @pokedex/app",
     "build:server": "npm run build -w @pokedex/shared && npm run build -w @pokedex/server",
     "dist": "npm run build:web && npm run build:server && electron-builder"

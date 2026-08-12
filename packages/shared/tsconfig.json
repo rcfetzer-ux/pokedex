@@ -3,6 +3,11 @@
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
+    // Kept inside dist so `rm -rf dist` is a real clean. Left at the default
+    // alongside tsconfig.json, a stale build-info file makes tsc believe the
+    // project is current and emit nothing, and the failure then surfaces
+    // downstream as a bogus "cannot find module" in the dependent package.
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "composite": true
   },
   "include": ["src/**/*.ts"],

@@ -26,7 +26,27 @@ Then pick a client:
 
 ```bash
 npm run app       # Expo: press w for web, i for iOS, a for Android
-npm run desktop   # Electron desktop app
+npm run desktop   # Electron desktop app — builds everything it needs
+```
+
+`npm run desktop` is self-contained: it compiles the server, exports the web
+build and launches the window, so a fresh clone needs nothing else. It keeps
+its own database under your user data directory, separate from the repo, and
+offers to import the catalog on first launch:
+
+| | |
+| --- | --- |
+| macOS | `~/Library/Application Support/Pokedex/pokedex.db` |
+| Windows | `%APPDATA%\Pokedex\pokedex.db` |
+| Linux | `~/.config/Pokedex/pokedex.db` |
+
+To open the desktop app on the seeded demo data instead of an empty catalog,
+seed straight into that path:
+
+```bash
+DATABASE_PATH="$HOME/.config/Pokedex/pokedex.db" \
+  npm run seed -w @pokedex/server -- --reset
+npm run desktop
 ```
 
 The seed uses the offline fixture provider, so the whole thing runs with no API
